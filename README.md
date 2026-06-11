@@ -19,12 +19,8 @@ A lightweight Windows tray tool for switching between multiple JDK versions inst
 
 Example tray menu:
 
-Java Switcher
-jdk-8
-jdk-17
-jdk-21
+<img width="175" height="156" alt="image" src="https://github.com/user-attachments/assets/2b1f2e97-db17-48ba-9b54-099c4363f5ee" />
 
-Exit
 
 
 ---
@@ -41,6 +37,11 @@ pip install pystray pillow
 3. Run
 python main.py
 ```
+## 📁Modify the actual folder
+<img width="759" height="195" alt="image" src="https://github.com/user-attachments/assets/8a49cf5b-cec6-42bf-91b5-8f3c19aec32a" />
+
+
+
 ## 📁 JDK Directory Structure
 
 Default scan path:
