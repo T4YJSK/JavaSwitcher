@@ -1,19 +1,27 @@
-# ☕ JavaSwitcher
+# Java Switcher
 
-A lightweight Windows tray tool for switching between multiple JDK versions instantly.
+A lightweight Windows system tray utility designed for developers to quickly launch isolated command-line environments with different JDK versions—**without modifying global system environment variables**.
+
+一个轻量级的 Windows 系统托盘工具，专门用于为开发者快速提供不同 Java 版本的独立命令行环境，**完全不影响和修改系统的全局环境变量**。
+
+---
+
+## 🚀 Features | 核心特性
+
+- **Zero Global Pollution**: Modifies environment variables at the process level (`os.environ`). Your system's global `PATH` and `JAVA_HOME` remain perfectly clean.
+- **Dynamic Refresh**: The tray menu scans the directory in real-time. Adding or renaming a JDK folder reflects instantly without restarting the app.
+- **No File Littering**: Pure memory/process-level injection; no temporary `.bat` or `.cmd` files are created on your disk.
+- **Portable**: Can be placed directly inside your Java tools directory.
 
 ---
 
-## 🚀 Features
+## 🛠️ Prerequisites | 前置需求
 
-- 🧠 Auto-detects installed JDKs
-- 🖱 One-click Java version switching
-- 🪟 Opens new CMD with selected Java environment
-- ⚡ No admin required
-- 🪶 Lightweight and simple
-- 📁 Supports multiple JDK folders (jdk-8 / jdk-11 / jdk-17 / jdk-21)
+Make sure you have Python 3.x installed along with the required dependencies:
 
----
+```bash
+pip install pystray Pillow
+```
 
 ## 📸 Preview
 
@@ -25,36 +33,38 @@ Example tray menu:
 
 ---
 
-## 📦 Installation
+## 📦 Directory Setup & Configuration | 目录配置
 
-### 1. Clone repository
+By default, the script scans directories in two priorities:
+1. **Current Directory**: The same folder where this script resides.
+2. **Fallback Directory**: `E:\Java` (You can change `DEFAULT_JAVA_BASE` in the script to match your setup).
 
-```bash
-git clone https://github.com/your-username/JavaSwitcher.git
-cd JavaSwitcher
-2. Install dependencies
-pip install pystray pillow
-3. Run
-python main.py
+### Directory Example | 目录结构示例:
+Ensure your JDK folders contain the standard `bin\java.exe` structure. The folder names will be directly displayed in the tray menu.
+确保你的 JDK 文件夹包含标准的 `bin\java.exe` 路径。文件夹的名称会直接作为托盘菜单的选项显示：
+
+```text
+E:\Java\
+├── JDK 8\          --> Will show as "JDK 8" in menu
+│   └── bin\java.exe
+├── OpenJDK 17\     --> Will show as "OpenJDK 17" in menu
+│   └── bin\java.exe
+└── GraalVM 21\     --> Will show as "GraalVM 21" in menu
+    └── bin\java.exe
 ```
+
 ## 📁Modify the actual folder
-<img width="759" height="195" alt="image" src="https://github.com/user-attachments/assets/8a49cf5b-cec6-42bf-91b5-8f3c19aec32a" />
+<img width="936" height="167" alt="image" src="https://github.com/user-attachments/assets/3464f7ea-f5a5-40dd-9298-2995404f1aeb" />
 
 
+---
 
-## 📁 JDK Directory Structure
+### 💻 使用方法部分 (Usage)
 
-Default scan path:
-
-E:\Java
-├── jdk-8
-├── jdk-11
-├── jdk-17
-└── jdk-21
-
-Each JDK must include:
-
-bin/java.exe
+```base
+1. Run the script | 运行脚本:
+   python main.py
+```
 
 ## ⚙ How it works
 Scans JDK directory
