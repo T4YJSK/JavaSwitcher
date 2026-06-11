@@ -1,23 +1,29 @@
 import os
 import subprocess
-import tempfile
 import pystray
 from PIL import Image, ImageDraw
 from functools import partial
 
-# ===================== 自动从脚本目录或固定目录 =====================
-JAVA_BASE = r"E:\Java"   # 你可以改这里
+# ===================== Configuration =====================
+# Prioritize checking the script directory; fallback to this default path if not found.
+DEFAULT_JAVA_BASE = r"E:\Java"  
 
-# ===================== 扫描 JDK =====================
+def get_java_base():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    if any(os.path.exists(os.path.join(script_dir, d, "bin", "java.exe")) for d in os.listdir(script_dir) if os.path.isdir(os.path.join(script_dir, d))):
+        return script_dir
+    return DEFAULT_JAVA_BASE
+
+# ===================== Scan JDKs =====================
 def detect_jdks():
     jdks = {}
+    java_base = get_java_base()
 
-    if not os.path.exists(JAVA_BASE):
+    if not os.path.exists(java_base):
         return jdks
 
-    for name in os.listdir(JAVA_BASE):
-        path = os.path.join(JAVA_BASE, name)
-
+    for name in os.listdir(java_base):
+        path = os.path.join(java_base, name)
         java_exe = os.path.join(path, "bin", "java.exe")
 
         if os.path.isdir(path) and os.path.exists(java_exe):
@@ -25,43 +31,46 @@ def detect_jdks():
 
     return jdks
 
-# ===================== 启动 Java =====================
-def open_java_terminal(path):
-    bat = f"""@echo off
-set JAVA_HOME={path}
-set PATH=%JAVA_HOME%\\bin;%PATH%
-
-echo =========================
-echo JAVA_HOME=%JAVA_HOME%
-where java
-java -version
-echo =========================
-
-cmd
-"""
-
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".bat", mode="w", encoding="utf-8")
-    tmp.write(bat)
-    tmp.close()
-
-    subprocess.Popen(f'start cmd /k "{tmp.name}"', shell=True)
-
-# ===================== JDK切换 =====================
+# ===================== Launch Java =====================
 def set_java(path, icon, item):
-    open_java_terminal(path)
+    """
+    Launch CMD by modifying child process environment variables,
+    completely eliminating the need for temporary .bat files.
+    """
+    # Clone and modify the current environment variables
+    env = os.environ.copy()
+    env["JAVA_HOME"] = path
+    env["PATH"] = f"{path}\\bin;" + env["PATH"]
 
-# ===================== 图标 =====================
+    # Chain initialization commands using '&' to display environment info
+    init_cmds = (
+        'echo ========================= & '
+        f'echo JAVA_HOME={path} & '
+        'where java & '
+        'java -version & '
+        'echo ========================='
+    )
+    
+    # Launch a new window; '/k' keeps the command prompt open
+    subprocess.Popen(f'start cmd /k "{init_cmds}"', env=env, shell=True)
+
+# ===================== Icon Generation =====================
 def create_image():
     img = Image.new("RGB", (64, 64), (0, 120, 215))
     d = ImageDraw.Draw(img)
     d.rectangle([10, 10, 54, 54], fill="white")
-    d.text((22, 22), "J", fill="black")
+    # Slightly adjusted position for better centering with default fonts
+    d.text((28, 20), "J", fill="black")
     return img
 
-# ===================== 固定菜单（关键修复点） =====================
-def build_menu():
+# ===================== Dynamic Menu =====================
+def get_menu_items():
+    """
+    This function is called every time the tray menu opens,
+    enabling dynamic, real-time JDK list refreshing.
+    """
     jdks = detect_jdks()
-
+    
     items = [
         pystray.MenuItem("Java Switcher", lambda icon, item: None, enabled=False),
         pystray.Menu.SEPARATOR,
@@ -71,26 +80,25 @@ def build_menu():
         for name, path in jdks.items():
             items.append(pystray.MenuItem(name, partial(set_java, path)))
     else:
-        items.append(pystray.MenuItem("未检测到JDK", lambda icon, item: None, enabled=False))
+        items.append(pystray.MenuItem("No JDK Detected", lambda icon, item: None, enabled=False))
 
     items += [
         pystray.Menu.SEPARATOR,
-        pystray.MenuItem("退出", lambda icon, item: icon.stop())
+        pystray.MenuItem("Exit", lambda icon, item: icon.stop())
     ]
+    return items
 
-    return pystray.Menu(*items)
-
-# ===================== 托盘 =====================
+# ===================== Tray Application =====================
 def run_tray():
     icon = pystray.Icon(
         "JavaSwitcher",
         create_image(),
         "Java Switcher",
-        menu=build_menu()   # ⚠ 注意：必须是 Menu 对象
+        # Pass the callable function directly to make the menu dynamic
+        menu=pystray.Menu(get_menu_items) 
     )
-
     icon.run()
 
-# ===================== 主程序 =====================
+# ===================== Main Entry Point =====================
 if __name__ == "__main__":
     run_tray()
